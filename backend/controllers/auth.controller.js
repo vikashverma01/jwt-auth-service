@@ -4,7 +4,6 @@ import {
   generateRefreshToken,
 } from "../utils/generateToken.js";
 
-
 // to login user
 
 export const loginUser = async (req, res) => {
@@ -62,7 +61,6 @@ export const registerUser = async (req, res) => {
   }
 };
 
-
 // to refresh access token
 export const refreshAccessToken = async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
@@ -84,4 +82,34 @@ export const refreshAccessToken = async (req, res) => {
   res.json({
     accessToken,
   });
+};
+
+// logout user
+
+export const logoutUser = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(204).json({ message: "User already logged out" });
+    }
+
+    const user = await User.findOne({ refreshToken });
+
+    if (user) {
+      user.refreshToken = null;
+      await user.save({ validateBeforeSave: false });
+    }
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: false,
+    });
+
+    return res.status(200).json({
+      message: "User logged out successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
